@@ -10,7 +10,20 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static assets from the same folder as this server file
-app.use(express.static(path.join(__dirname)));
+// Ensure this is at the top of server.js
+
+// 1. Static files (CSS/JS)
+app.use(express.static(path.join(__dirname, 'scripts')));
+
+// 2. The Root Route (Fixes "Cannot GET /")
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'scripts', 'index.html'));
+});
+
+// 3. The Monitor Route (Fixes "Cannot GET /monitor")
+app.get('/monitor', (req, res) => {
+    res.sendFile(path.join(__dirname, 'scripts', 'monitor.html'));
+});
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
