@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Disaster Dept | Command Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+</head>
+<body class="bg-black text-slate-100 p-8 min-h-screen font-sans">
+    <header class="flex justify-between items-center mb-8 bg-slate-900 p-6 rounded-2xl border border-slate-800">
+        <div class="flex items-center gap-3">
+            <div class="w-3 h-3 bg-red-600 rounded-full animate-ping"></div>
+            <h1 class="text-2xl font-black uppercase tracking-widest text-white text-center">Command Center</h1>
+            <div id="conn-status" class="ml-4 px-3 py-1 text-[11px] font-bold uppercase rounded-xl bg-white/5 border border-white/10 text-slate-300">Connecting…</div>
+        </div>
+        <a href="/index.html" class="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all">
+            ← EXIT TO PUBLIC VIEW
+        </a>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[75vh]">
+        <div class="lg:col-span-1 flex flex-col gap-4">
+            <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Regional Activity</h2>
+            <div id="monitor-feed" class="flex-1 space-y-4 overflow-y-auto pr-2"></div>
+        </div>
+
+        <div class="lg:col-span-2 bg-slate-900 rounded-3xl p-8 border border-slate-800 flex flex-col">
+            <h2 class="text-xl font-bold mb-4 text-white">Transmission Logs (Gmail)</h2>
+            <div id="logs" class="flex-1 font-mono text-sm overflow-y-auto space-y-2">
+                <div class="text-cyan-500 opacity-50">[SYSTEM] Secure Node.js engine active on Port 3001.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Use the current origin explicitly to avoid file:// issues
+        const socket = io(window.location.origin);
+
+        const statusEl = document.getElementById('conn-status');
+        function setStatus(text, cls) {
+            if(!statusEl) return;
+            statusEl.textContent = text;
+            statusEl.className = (cls || '') + ' ml-4 px-3 py-1 text-[11px] font-bold uppercase rounded-xl';
+        }
+
+        socket.on('connect', () => {
+            console.log('Socket connected', socket.id);
+            setStatus('Connected', 'bg-green-600 text-white');
+        });
+
+        socket.on('connect_error', (err) => {
+            console.error('Socket connect_error', err);
+            setStatus('Connect Error', 'bg-red-600 text-white');
+        });
+
+        socket.on('disconnect', (reason) => {
+            console.warn('Socket disconnected', reason);
+            setStatus('Disconnected', 'bg-yellow-600 text-black');
+        });
+
+        socket.on('MONITOR_UPDATE', (data) => {
+            try {
+                const mag = parseFloat(data && data.magnitude) || 0;
+                const feed = document.getElementById('monitor-feed');
+                const item = document.createElement('div');
+
+                item.className = `p-6 rounded-2xl border-2 transition-all duration-500 ${mag >= 7 ? 'bg-red-900/20 border-red-500' : mag >= 5 ? 'bg-orange-900/20 border-orange-500 shadow-lg' : 'bg-slate-900 border-slate-800'}`;
+
+                const loc = data.locationName || 'Unknown location';
+                const magText = data.magnitude || mag.toFixed(1);
+
+                item.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg text-white">${loc}</h3>
+                        <span class="font-mono text-orange-400 font-bold text-xl">M ${magText}</span>
+                    </div>
+                    ${mag >= 5 && mag < 7 ? `
+                        <button onclick="manualNotify('${loc}', '${magText}')" 
+                            class="w-full bg-orange-500 hover:bg-orange-400 text-black font-black py-3 rounded-xl text-xs uppercase transition-colors">
+                            Notify 10km Volunteers
+                        </button>
+                    ` : mag >= 7 ? `
+                        <div class="text-red-500 font-black animate-pulse text-[10px] uppercase text-center py-2 border border-red-500/30 rounded-lg">
+                            🚨 Critical Email Dispatched
+                        </div>
+                    ` : `<span class="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Stable</span>`}
+                `;
+                feed.prepend(item);
+                if(feed.children.length > 5) feed.lastChild.remove();
+            } catch (e) {
+                console.error('Error processing MONITOR_UPDATE', e, data);
+            }
+        });
+
+        socket.on('LOG_UPDATE', (info) => {
+            try {
+                const logContainer = document.getElementById('logs');
+                const entry = document.createElement('div');
+                entry.className = "bg-slate-800/80 p-4 rounded-xl text-white border-l-4 border-blue-500";
+                const location = info && (info.location || 'Unknown');
+                entry.innerHTML = `
+                    <div class="text-[10px] font-black text-blue-400 uppercase mb-1">${info.type || 'LOG'} DISPATCH</div>
+                    <div class="text-xs italic">📧 Alert sent to ${location} via ${info.method || 'GMAIL'}.</div>
+                `;
+                logContainer.prepend(entry);
+            } catch (e) {
+                console.error('Error processing LOG_UPDATE', e, info);
+            }
+        });
+
+        function manualNotify(loc, mag) {
+            fetch('/api/notify-manual', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ locationName: loc, magnitude: mag })
+            }).catch(err => console.error('manualNotify error', err));
+        }
+    </script>
+</body>
+</html>
