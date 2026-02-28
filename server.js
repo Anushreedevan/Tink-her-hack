@@ -65,12 +65,10 @@ function handleQuake({ magnitude, locationName }) {
     io.emit('MONITOR_UPDATE', payload);
 
     if (magValue >= 7.0) {
-        if (!isAlertActive) {
-            const emailData = generateEmail(magnitude, locationName, 'AUTOMATIC');
-            sendAlertEmail(emailData.subject, emailData.body, 'AUTOMATIC', locationName);
-            isAlertActive = true;
-            console.log("🔒 Critical Guard Active.");
-        }
+    // This will send an email for EVERY data point >= 7.0
+    const emailData = generateEmail(magnitude, locationName, 'AUTOMATIC');
+    sendAlertEmail(emailData.subject, emailData.body, 'AUTOMATIC', locationName);
+}
     } else {
         if (isAlertActive) {
             isAlertActive = false;
