@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, 'scripts')));
 
 // 2. The Root Route (Fixes "Cannot GET /")
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'scripts', 'index.html'));
+    res.sendFile(path.join(__dirname, 'scripts', 'Index.html'));
 });
 
 // 3. The Monitor Route (Fixes "Cannot GET /monitor")
