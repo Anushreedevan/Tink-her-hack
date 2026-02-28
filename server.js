@@ -32,9 +32,12 @@ const io = new Server(server, { cors: { origin: "*" } });
 // --- Gmail Configuration ---
 const transporter = nodemailer.createTransport({
   service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // Use SSL
   auth: {
-    user: 'anushreeofficial1608@gmail.com',
-    pass: 'brdz lekw dfgd fjyo' 
+    user: 'anushreeofficial1608@gmail.com', // Your Gmail
+    pass: 'brdz lekw dfgd fjyo' // Your NEW 16-char App Password
   }
 });
 
