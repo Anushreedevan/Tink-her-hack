@@ -53,7 +53,13 @@ Bash
 node server.js
 Project Documentation
 For Software:
-Screenshots
+<img width="1920" height="1080" alt="Screenshot 2026-02-28 095911" src="https://github.com/user-attachments/assets/867194ae-a7dc-4054-a7cb-796b4abee031" />
+
+<img width="1920" height="1080" alt="Screenshot 2026-02-28 095928" src="https://github.com/user-attachments/assets/65121d6d-60fe-4d6f-9b17-82a0595e601b" />
+
+<img width="718" height="1599" alt="image" src="https://github.com/user-attachments/assets/69634847-6677-404f-ac7e-eef2eddcdcf7" />
+
+
 Admin Command Center showing live seismic readings and the Gmail transmission log.
 
 The Public Portal automatically switching to a Red 'EVACUATE' state during high-magnitude events.
