@@ -34,7 +34,7 @@
 
     <script>
         // Use the current origin explicitly to avoid file:// issues
-        const socket = io(window.location.origin);
+        const socket = io(); // ✅ This tells the dashboard to look at the site it's currently on
 
         const statusEl = document.getElementById('conn-status');
         function setStatus(text, cls) {

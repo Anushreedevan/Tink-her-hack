@@ -5,7 +5,7 @@ const sendData = async () => {
   const currentMag = mags[Math.floor(Math.random() * mags.length)];
   
   try {
-    await axios.post('http://localhost:3001/api/quake', {
+    await axios.post('https://tink-her-hack-q5dc.onrender.com/api/quake', {
       magnitude: currentMag,
       locationName: "Kothamangalam",
       intensity: currentMag >= 7 ? "Extreme" : currentMag >= 5 ? "Moderate" : "Low",
