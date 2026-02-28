@@ -114,5 +114,6 @@ app.post('/api/notify-manual', (req, res) => {
   res.sendStatus(200);
 });
 
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => console.log(`🚀 Engine live at http://localhost:${PORT}`));
+// This line allows Render to tell your app which port to use
+const PORT = process.env.PORT || 3001; 
+server.listen(PORT, () => console.log(`🚀 Engine live on port ${PORT}`));
