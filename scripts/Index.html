@@ -17,33 +17,27 @@
         </div>
     </section>
     <script>
-        // Determine backend URL: try current origin first (local dev), then Render backend
-        const backendUrl = window.location.hostname === 'localhost' 
-            ? window.location.origin 
-            : 'https://tink-her-hack-q5dc.onrender.com'; // Render deployed backend URL
+        // Sample earthquake data array
+        const earthquakeData = [
+            { magnitude: "1.2", locationName: "Kothamangalam" },
+            { magnitude: "2.1", locationName: "Ernakulam" },
+            { magnitude: "3.5", locationName: "Kochi" },
+            { magnitude: "4.8", locationName: "Thrissur" },
+            { magnitude: "5.2", locationName: "Kodungalloor" },
+            { magnitude: "5.9", locationName: "Aluva" },
+            { magnitude: "6.5", locationName: "Angamaly" },
+            { magnitude: "7.2", locationName: "Fort Kochi" },
+            { magnitude: "7.8", locationName: "Mattancherry" }
+        ];
 
-        console.log('🔗 Connecting to backend:', backendUrl);
-        const socket = io(backendUrl, { 
-            reconnection: true,
-            reconnectionDelay: 1000,
-            reconnectionDelayMax: 5000,
-            reconnectionAttempts: 5 
-        });
+        function getRandomQuake() {
+            return earthquakeData[Math.floor(Math.random() * earthquakeData.length)];
+        }
 
-        socket.on('connect', () => {
-            console.log('✅ Socket connected to backend');
-        });
-
-        socket.on('connect_error', (err) => {
-            console.error('❌ Socket connection error:', err);
-        });
-
-        socket.on('disconnect', (reason) => {
-            console.warn('⚠️ Socket disconnected:', reason);
-        });
-
-        socket.on('MONITOR_UPDATE', (data) => {
-            console.log('📡 MONITOR_UPDATE received:', data);
+        function simulateQuakeUpdate() {
+            const data = getRandomQuake();
+            console.log('📡 Simulated MONITOR_UPDATE:', data);
+            
             const mag = parseFloat(data.magnitude);
             const hero = document.getElementById('hero-bg');
             const main = document.getElementById('main-status');
@@ -63,7 +57,13 @@
                 hero.className = "min-h-screen flex flex-col items-center justify-center transition-colors duration-1000 bg-slate-900";
                 main.innerText = "WATCH";
             }
-        });
+        }
+
+        // Auto-trigger random quake every 5 seconds for demo
+        setInterval(simulateQuakeUpdate, 5000);
+
+        // Also trigger on page load
+        simulateQuakeUpdate();
     </script>
 </body>
 </html>

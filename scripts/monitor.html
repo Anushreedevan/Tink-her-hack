@@ -33,18 +33,22 @@
     </div>
 
     <script>
-        // Determine backend URL: try current origin first (local dev), then Render backend
-        const backendUrl = window.location.hostname === 'localhost' 
-            ? window.location.origin 
-            : 'https://tink-her-hack-q5dc.onrender.com'; // Render deployed backend URL
+        // Sample earthquake data array
+        const earthquakeData = [
+            { magnitude: "1.2", locationName: "Kothamangalam" },
+            { magnitude: "2.1", locationName: "Ernakulam" },
+            { magnitude: "3.5", locationName: "Kochi" },
+            { magnitude: "4.8", locationName: "Thrissur" },
+            { magnitude: "5.2", locationName: "Kodungalloor" },
+            { magnitude: "5.9", locationName: "Aluva" },
+            { magnitude: "6.5", locationName: "Angamaly" },
+            { magnitude: "7.2", locationName: "Fort Kochi" },
+            { magnitude: "7.8", locationName: "Mattancherry" }
+        ];
 
-        console.log('🔗 Monitor connecting to backend:', backendUrl);
-        const socket = io(backendUrl, { 
-            reconnection: true,
-            reconnectionDelay: 1000,
-            reconnectionDelayMax: 5000,
-            reconnectionAttempts: 5
-        });
+        function getRandomQuake() {
+            return earthquakeData[Math.floor(Math.random() * earthquakeData.length)];
+        }
 
         const statusEl = document.getElementById('conn-status');
         function setStatus(text, cls) {
@@ -53,22 +57,13 @@
             statusEl.className = (cls || '') + ' ml-4 px-3 py-1 text-[11px] font-bold uppercase rounded-xl';
         }
 
-        socket.on('connect', () => {
-            console.log('Socket connected', socket.id);
-            setStatus('Connected', 'bg-green-600 text-white');
-        });
+        // Set initial status
+        setStatus('Simulation Active', 'bg-green-600 text-white');
 
-        socket.on('connect_error', (err) => {
-            console.error('Socket connect_error', err);
-            setStatus('Connect Error', 'bg-red-600 text-white');
-        });
-
-        socket.on('disconnect', (reason) => {
-            console.warn('Socket disconnected', reason);
-            setStatus('Disconnected', 'bg-yellow-600 text-black');
-        });
-
-        socket.on('MONITOR_UPDATE', (data) => {
+        function simulateMonitorUpdate() {
+            const data = getRandomQuake();
+            console.log('📡 Simulated MONITOR_UPDATE:', data);
+            
             try {
                 const mag = parseFloat(data && data.magnitude) || 0;
                 const feed = document.getElementById('monitor-feed');
@@ -100,30 +95,33 @@
             } catch (e) {
                 console.error('Error processing MONITOR_UPDATE', e, data);
             }
-        });
 
-        socket.on('LOG_UPDATE', (info) => {
+            // Simulate LOG_UPDATE for demo
             try {
                 const logContainer = document.getElementById('logs');
                 const entry = document.createElement('div');
                 entry.className = "bg-slate-800/80 p-4 rounded-xl text-white border-l-4 border-blue-500";
-                const location = info && (info.location || 'Unknown');
+                const timestamp = new Date().toLocaleTimeString();
                 entry.innerHTML = `
-                    <div class="text-[10px] font-black text-blue-400 uppercase mb-1">${info.type || 'LOG'} DISPATCH</div>
-                    <div class="text-xs italic">📧 Alert sent to ${location} via ${info.method || 'GMAIL'}.</div>
+                    <div class="text-[10px] font-black text-blue-400 uppercase mb-1">DEMO UPDATE - ${timestamp}</div>
+                    <div class="text-xs italic">📡 Simulated quake: ${data.locationName} M${data.magnitude}</div>
                 `;
                 logContainer.prepend(entry);
             } catch (e) {
-                console.error('Error processing LOG_UPDATE', e, info);
+                console.error('Error processing LOG_UPDATE', e);
             }
-        });
+        }
+
+        // Auto-trigger random quake every 4 seconds for demo
+        setInterval(simulateMonitorUpdate, 4000);
+
+        // Trigger on page load
+        simulateMonitorUpdate();
 
         function manualNotify(loc, mag) {
-            fetch('/api/notify-manual', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ locationName: loc, magnitude: mag })
-            }).catch(err => console.error('manualNotify error', err));
+            console.log('📬 Manual notification triggered for:', loc, 'M' + mag);
+            // In demo mode, just log to console
+            alert(`Notification sent for ${loc} (M${mag})`);
         }
     </script>
 </body>
