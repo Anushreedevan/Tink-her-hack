@@ -10,23 +10,9 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static assets from the same folder as this server file
-// Ensure this is at the top of server.js
-
-// 1. Static files (CSS/JS)
-app.use(express.static(path.join(__dirname, 'scripts')));
-
-// 2. The Root Route (Fixes "Cannot GET /")
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'scripts', 'Index.html'));
-});
-
-// 3. The Monitor Route (Fixes "Cannot GET /monitor")
-app.get('/monitor', (req, res) => {
-    res.sendFile(path.join(__dirname, 'scripts', 'monitor.html'));
-});
+app.use(express.static(path.join(__dirname)));
 
 const server = http.createServer(app);
-
 const io = new Server(server, { cors: { origin: "*" } });
 
 // --- Gmail Configuration ---
@@ -40,51 +26,23 @@ const transporter = nodemailer.createTransport({
 
 let isAlertActive = false; 
 
-// simulation helpers (optional, controlled by environment)
+// sample data for autonomous simulation
 const sampleQuakes = [
     { magnitude: "1.8", locationName: "Kothamangalam" },
     { magnitude: "2.4", locationName: "Ernakulam" },
     { magnitude: "3.1", locationName: "Aluva" },
     { magnitude: "4.6", locationName: "Thrissur" },
     { magnitude: "5.3", locationName: "Kochi" },
-    { magnitude: "5.9", locationName: "Angamaly" },
+    { magnitude: "6.0", locationName: "Angamaly" },
     { magnitude: "7.1", locationName: "Mattancherry" },
     { magnitude: "7.5", locationName: "Fort Kochi" }
 ];
+
+// helper to simulate random quake pick
 function randomQuake() {
     return sampleQuakes[Math.floor(Math.random() * sampleQuakes.length)];
 }
 
-function handleQuake({ magnitude, locationName }) {
-    const magValue = parseFloat(magnitude);
-    const payload = { magnitude, locationName };
-    console.log('🔷 Processing quake:', payload);
-    io.emit('MONITOR_UPDATE', payload);
-
-    if (magValue >= 7.0) {
-        if (!isAlertActive) {
-            const emailData = generateEmail(magnitude, locationName, 'AUTOMATIC');
-            sendAlertEmail(emailData.subject, emailData.body, 'AUTOMATIC', locationName);
-            isAlertActive = true;
-            console.log("🔒 Critical Guard Active.");
-        }
-    } else {
-        if (isAlertActive) {
-            isAlertActive = false;
-            console.log("🔓 System Reset.");
-        }
-    }
-}
-
-// expose simulation endpoint and optional interval
-if (process.env.SIMULATE === 'true') {
-    app.post('/api/quake/simulate', (req, res) => {
-        const quake = randomQuake();
-        handleQuake(quake);
-        res.json({ status: 'simulated', quake });
-    });
-    setInterval(() => handleQuake(randomQuake()), 15000);
-}
 
 // --- RESTORED: Dynamic Email Template Function ---
 const generateEmail = (magnitude, locationName, type) => {
@@ -134,6 +92,29 @@ const sendAlertEmail = (subject, message, type, location) => {
   });
 };
 
+// centralized quake processing (used by API and simulator)
+function handleQuake({ magnitude, locationName }) {
+  const magValue = parseFloat(magnitude);
+  const payload = { magnitude, locationName };
+
+  console.log('🔷 Processing quake:', payload);
+  io.emit('MONITOR_UPDATE', payload);
+
+  if (magValue >= 7.0) {
+    if (!isAlertActive) {
+      const emailData = generateEmail(magnitude, locationName, 'AUTOMATIC');
+      sendAlertEmail(emailData.subject, emailData.body, 'AUTOMATIC', locationName);
+      isAlertActive = true;
+      console.log('🔒 Critical Guard Active.');
+    }
+  } else {
+    if (isAlertActive) {
+      isAlertActive = false;
+      console.log('🔓 System Reset.');
+    }
+  }
+}
+
 // --- FIXED NAVIGATION ROUTES ---
 // Also expose explicit routes at root for convenience
 app.get('/index.html', (req, res) => {
@@ -157,6 +138,20 @@ app.post('/api/notify-manual', (req, res) => {
   res.sendStatus(200);
 });
 
-// This line allows Render to tell your app which port to use
-const PORT = process.env.PORT || 3001; 
-server.listen(PORT, () => console.log(`🚀 Engine live on port ${PORT}`));
+// --- Simulation endpoint / periodic generator ---
+app.post('/api/quake/simulate', (req, res) => {
+  // manually trigger one random quake (for testing from frontend)
+  const quake = randomQuake();
+  handleQuake(quake);
+  res.json({ status: 'simulated', quake });
+});
+
+// fire off an autonomous random quake every 15 seconds
+setInterval(() => {
+  const quake = randomQuake();
+  handleQuake(quake);
+}, 15000);
+
+
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => console.log(`🚀 Engine live at http://localhost:${PORT}`));
