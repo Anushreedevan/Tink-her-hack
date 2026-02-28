@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Disaster Dept | Public Safety</title>
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-black text-white overflow-x-hidden font-sans">
@@ -17,8 +17,33 @@
         </div>
     </section>
     <script>
-        const socket = io();
+        // Determine backend URL: try current origin first (local dev), then Render backend
+        const backendUrl = window.location.hostname === 'localhost' 
+            ? window.location.origin 
+            : 'https://tink-her-hack-q5dc.onrender.com'; // Render deployed backend URL
+
+        console.log('🔗 Connecting to backend:', backendUrl);
+        const socket = io(backendUrl, { 
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: 5 
+        });
+
+        socket.on('connect', () => {
+            console.log('✅ Socket connected to backend');
+        });
+
+        socket.on('connect_error', (err) => {
+            console.error('❌ Socket connection error:', err);
+        });
+
+        socket.on('disconnect', (reason) => {
+            console.warn('⚠️ Socket disconnected:', reason);
+        });
+
         socket.on('MONITOR_UPDATE', (data) => {
+            console.log('📡 MONITOR_UPDATE received:', data);
             const mag = parseFloat(data.magnitude);
             const hero = document.getElementById('hero-bg');
             const main = document.getElementById('main-status');

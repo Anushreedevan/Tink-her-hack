@@ -33,8 +33,18 @@
     </div>
 
     <script>
-        // Use the current origin explicitly to avoid file:// issues
-        const socket = io(); // ✅ This tells the dashboard to look at the site it's currently on
+        // Determine backend URL: try current origin first (local dev), then Render backend
+        const backendUrl = window.location.hostname === 'localhost' 
+            ? window.location.origin 
+            : 'https://tink-her-hack-q5dc.onrender.com'; // Render deployed backend URL
+
+        console.log('🔗 Monitor connecting to backend:', backendUrl);
+        const socket = io(backendUrl, { 
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            reconnectionAttempts: 5
+        });
 
         const statusEl = document.getElementById('conn-status');
         function setStatus(text, cls) {
